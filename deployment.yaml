@@ -68,7 +68,7 @@ spec:
 
       - name: flask-container
 
-        image: gcr.io/lbg-mea-18/adr-project3:latest
+        image: gcr.io/lbg-mea-18/adr-project3/lbg:latest
 
         imagePullPolicy: Always
 
