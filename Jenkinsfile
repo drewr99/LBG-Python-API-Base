@@ -4,11 +4,19 @@ pipeline {
 
     environment {
 
-        GCR_CREDENTIALS_ID = 'P3' // The ID you provided in Jenkins credentials
+        GCR_CREDENTIALS_ID = 'P3'
 
         IMAGE_NAME = 'lbg'
 
         GCR_URL = 'gcr.io/lbg-mea-18/adr-project3'
+
+        PROJECT_ID = 'P-3-GKE'
+
+        CLUSTER_NAME = 'demo-cluster-adr'
+
+        LOCATION = 'europe-west2-c'
+
+        CREDENTIALS_ID = 'SerAcc'
 
     }
 
@@ -16,36 +24,51 @@ pipeline {
 
         stage('Build and Push to GCR') {
 
-    steps {
+            steps {
 
-        script {
+                script {
 
-            // Authenticate with Google Cloud
+                    // Authenticate with Google Cloud
 
-            withCredentials([file(credentialsId: GCR_CREDENTIALS_ID, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                    withCredentials([file(credentialsId: GCR_CREDENTIALS_ID, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
 
-                sh 'gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS'
+                        sh 'gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS'
+
+                    }
+
+                    // Configure Docker to use gcloud as a credential helper
+
+                    sh 'gcloud auth configure-docker --quiet'
+
+                    // Build the Docker image
+
+                    sh "docker build -t ${GCR_URL}/${IMAGE_NAME}:latest ."
+
+                    // Push the Docker image to GCR
+
+                    sh "docker push ${GCR_URL}/${IMAGE_NAME}:latest"
+
+                }
 
             }
 
-            // Configure Docker to use gcloud as a credential helper
+        }
 
-            sh 'gcloud auth configure-docker --quiet'
-            
-            // Build the Docker image
+        stage('Deploy to GKE') {
 
-            sh "docker build -t ${GCR_URL}/${IMAGE_NAME}:${BUILD_NUMBER} ."
+            steps {
 
-            // Push the Docker image to GCR
+                script {
 
-            sh "docker push ${GCR_URL}/${IMAGE_NAME}:${BUILD_NUMBER}"
+                    // Deploy to GKE using Jenkins Kubernetes Engine Plugin
+
+                    step([$class: 'KubernetesEngineBuilder', projectId: env.PROJECT_ID, clusterName: env.CLUSTER_NAME, location: env.LOCATION, manifestPattern: 'kubernetes/deployment.yaml', credentialsId: env.CREDENTIALS_ID, verifyDeployments: true])
+
+                }
+
+            }
 
         }
 
     }
-
-        }
-
-    }
-
 }
