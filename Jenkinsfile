@@ -10,7 +10,7 @@ pipeline {
 
         GCR_URL = 'gcr.io/lbg-mea-18/adr-project3'
 
-        PROJECT_ID = 'P-3-GKE'
+        PROJECT_ID = 'lbg-mea-18'
 
         CLUSTER_NAME = 'demo-cluster-adr'
 
